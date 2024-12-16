@@ -28,7 +28,7 @@ Svelte 5 Runes powered wrapper for [@floating-ui](https://floating-ui.com). An a
 - `use:float.arrow` - Designated arrow element; must be a direct child element of `use:float`
 - `use:float.ref` - The thing the floated element(s) is referencing
 
-[Svelte Playground - Usage example](https://svelte.dev/playground/)
+[Svelte Playground - Usage example](https://svelte.dev/playground/98b0d71e31a0432fa853e8edefb555bf?version=5.14.0)
 
 ```html
 <script>
@@ -61,7 +61,7 @@ Svelte 5 Runes powered wrapper for [@floating-ui](https://floating-ui.com). An a
 
 You can use `float.tether(element)` to float to another element than the `float.ref`. Then use `float.untether()` and it returns to `float.ref`.
 
-[Svelte Playground - Tethering example](https://svelte.dev/playground/)
+[Svelte Playground - Tethering example](https://svelte.dev/playground/7fd33cfe7a084f289253c30eb9eb79c2?version=5.14.0)
 
 ```html
 <script>
