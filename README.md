@@ -32,23 +32,23 @@ Svelte 5 Runes powered wrapper for [@floating-ui](https://floating-ui.com). An a
 
 ```html
 <script>
-	import floatingUI, { flip, shift, arrow } from 'floating-runes'
+    import floatingUI, { flip, shift, arrow } from 'floating-runes'
 
-	const float = floatingUI({
-		placement: 'top',
-		middleware: [
-			flip(),
-			shift(),
-			arrow()
+    const float = floatingUI({
+        placement: 'top',
+        middleware: [
+            flip(),
+            shift(),
+            arrow()
         ]
-	})
+    })
 </script>
 
 <div>
-	<tooltip use:float>
-		<arrow use:float.arrow></arrow>
-	</tooltip>
-	<button use:float.ref> Hover me </button>
+    <tooltip use:float>
+        <arrow use:float.arrow></arrow>
+    </tooltip>
+    <button use:float.ref> Hover me </button>
 </div>
 ```
 
@@ -65,44 +65,44 @@ You can use `float.tether(element)` to float to another element than the `float.
 
 ```html
 <script>
-	import floatingUI, { flip, shift, arrow } from 'floating-runes'
+    import floatingUI, { flip, shift, arrow } from 'floating-runes'
 
-	let url = '/a' // demo example
+    let url = '/a' // demo example
 
-	const float = floatingUI({
-		placement: 'bottom'
-	})
+    const float = floatingUI({
+        placement: 'bottom'
+    })
 </script>
 
 {#snippet href(ref, text)}
-	{#if url === ref}
-		<a
-			class='active' 
-			use:float.ref 
-			href={ref} 
-			onclick={e => e.preventDefault()}
-		> 
-			{text}
-		</a>
-	{:else}
-		<a
-			onmouseenter={e => float.tether(e.target)}
-			href={ref}
-			onclick={e => { e.preventDefault(); url = ref; }}
-		>
-			{text}
-		</a>
-	{/if}
+    {#if url === ref}
+        <a
+            class='active' 
+            use:float.ref 
+            href={ref} 
+            onclick={e => e.preventDefault()}
+        > 
+            {text}
+        </a>
+    {:else}
+        <a
+            onmouseenter={e => float.tether(e.target)}
+            href={ref}
+            onclick={e => { e.preventDefault(); url = ref; }}
+        >
+            {text}
+        </a>
+    {/if}
 {/snippet}
 
 <div class='hovered' use:float></div>
 <div class='active' use:float={{ tether: false }}></div>
 
 <div onmouseleave={() => float.untether()}>
-	{@render href('/a', 'Hover me')}
-	{@render href('/b', 'I want attention')}
-	{@render href('/c', 'Guys... what about meeEeEe')}
-	{@render href('/d', 'Ignore my brother')}
+    {@render href('/a', 'Hover me')}
+    {@render href('/b', 'I want attention')}
+    {@render href('/c', 'Guys... what about meeEeEe')}
+    {@render href('/d', 'Ignore my brother')}
 </div>
 ```
 
@@ -117,17 +117,17 @@ So you can go wild🦒
 
 ```html
 <script>
-	import floatingUI, { ... } from 'floating-runes'
+    import floatingUI, { ... } from 'floating-runes'
 
-	const float = floatingUI({
-		placement: 'top',
-		middleware: [
-			...
+    const float = floatingUI({
+        placement: 'top',
+        middleware: [
+            ...
         ]
-	}).then(computedData => {
-		const { middlewareData } = computedData
-		...
-	})
+    }).then(computedData => {
+        const { middlewareData } = computedData
+        ...
+    })
 </script>
 ```
 
@@ -141,7 +141,7 @@ When the component is destroyed, the element that been moved, will naturally, al
 
 ```html
 <script>
-	import { portal } from 'floating-runes'
+    import { portal } from 'floating-runes'
 </script>
 
 <div use:portal> I'm in the body😏 </div>
