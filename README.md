@@ -1,6 +1,16 @@
 # Floating Runes
 
-Svelte 5 Runes powered wrapper for [@floating-ui](https://floating-ui.com). An alternative approach to [svelte-floating-ui](https://github.com/fedorovvvv/svelte-floating-ui) which achieves the same thing.
+Svelte 5 Runes powered wrapper for [@floating-ui](https://floating-ui.com). An alternative approach to [svelte-floating-ui](https://github.com/fedorovvvv/svelte-floating-ui) which approx. does the same thing.
+
+floating-runes will also:
+
+- Position arrow/floater automatically (unless `autoPosition` is set to `false`)
+- Provide access to elements with `$state` for `.attached`, `.tethered`. `.referenced`
+- Tethering (temporary element reference)
+
+Other than that, just use it as using `@floating-ui`🎉
+
+Happy coding!🦒
 
 <br>
 
