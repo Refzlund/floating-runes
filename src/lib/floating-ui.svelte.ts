@@ -1,0 +1,270 @@
+import {
+	type ArrowOptions as TArrowOptions,
+	type AutoUpdateOptions,
+	type ComputePositionConfig,
+	type ComputePositionReturn,
+	type Derivable,
+	autoUpdate,
+	computePosition,
+	arrow as _arrow,
+	type Middleware
+} from '@floating-ui/dom'
+import { onDestroy } from 'svelte'
+import { SvelteMap, SvelteSet } from 'svelte/reactivity'
+
+export {
+	offset,
+	shift,
+	flip,
+	size,
+	autoPlacement,
+	hide,
+	inline
+} from '@floating-ui/dom'
+
+
+interface ArrowOptions extends Omit<TArrowOptions, 'element'> {}
+const arrowSymbol = Symbol('floating-runes.arrow')
+export function arrow(options: ArrowOptions | Derivable<ArrowOptions> = {}) {
+	const empty = {} as Middleware
+	Object.assign(empty, { [arrowSymbol]: options })
+	return empty as Middleware
+}
+
+
+interface Options extends Partial<Omit<ComputePositionConfig, 'autoUpdate'>> {
+	autoUpdate?: AutoUpdateOptions
+	/**
+	 * Whether or not to auto-position the floating element and the arrow, 
+	 * and auto-assign the `position:` to the strategy (absolute/fixed).
+	 * 
+	 * @default true
+	*/
+	autoPosition?: boolean
+}
+
+interface FloatOptions {
+	/**
+	 * Whether-to-tether.
+	 * @default true
+	*/
+	tether?: boolean
+
+	/**
+	 * If `false` it will stick to the last tethered target,
+	 * instead of going back to the reference.
+	 * @default true
+	*/
+	untether?: boolean
+}
+
+/** Svelte 5, $effect-driven `@floating-ui/dom`
+ * 
+ * @example
+ * ```html
+ * <script lang='ts'>
+ *     ...
+ * 
+ *     let float = floatingUI({
+ *         placement: 'top',
+ *         middleware: [
+ *             flip(),
+ *             shift()
+ *         ]
+ *     }).then(...) // optional
+ * </script>
+ *
+ * <span use:float.ref onmouseenter={...}>
+ *     This is some text
+ * </span>
+ * {#if showTooltip}
+ *     <span use:float> My tooltip </span>
+ * {/if}
+ * ```
+*/
+export function floatingUI(options: Options) {
+	/** <float, arrow> */
+	const arrowMap = new WeakMap<HTMLElement, HTMLElement>()
+	const floatMap = new SvelteMap<HTMLElement, FloatOptions>()
+	
+	const arrowIndex = options.middleware?.findIndex(m => m && typeof m === 'object' && arrowSymbol in m)
+	const middlewareMap = new WeakMap<HTMLElement, Middleware[]>
+
+	let ref = $state(undefined as HTMLElement | undefined)
+	let then = $state(undefined as ((computed: ComputePositionReturn) => void) | undefined)
+	let tether = $state(undefined as HTMLElement | undefined)
+
+	function setFloat(node: HTMLElement, options: FloatOptions = {}) {
+		floatMap.set(node, options)
+		return {
+			destroy: () => {
+				if (floatMap.has(node)) floatMap.delete(node)
+			}
+		}
+	}
+
+	const value = {
+		/** Returns tethered element if any, otherwise referenced element if any. */
+		get attached() {
+			return tether ?? ref
+		},
+		/** If tethered, returns the tethered element */
+		get tethered() {
+			return tether
+		},
+		/** If it has a reference, returns the referenced element */
+		get referenced() {
+			return ref
+		},
+		/**
+		 * `use:float.ref` on what you want the reference element
+		 * that the floating element positions relative to
+		 */
+		ref(node: HTMLElement) {
+			ref = node
+			return {
+				destroy: () => {
+					if (ref === node) ref = undefined
+				}
+			}
+		},
+		/**
+		 * Any additional logic according to https://floating-ui.com/docs
+		 */
+		then(cb: (computed: ComputePositionReturn) => void) {
+			then = cb
+			return setFloat as SvelteFloatingUI
+		},
+		/**
+		 * You can do use:float.tether and do float.untether()
+		 * to attach the floating element to a temporary target.
+		 */
+		tether(node: HTMLElement) {
+			tether = node
+			return {
+				destroy: () => {
+					if (tether === node) tether = undefined
+				}
+			}
+		},
+		/**
+		 * You can do use:float.tether and do float.untether()
+		 * to attach the floating element to a temporary target.
+		*/
+		untether() {
+			tether = undefined
+		},
+		arrow(node: HTMLElement) {
+			arrowMap.set(node.parentElement!, node)
+			return {
+				destroy: () => {
+					if (arrowMap.has(node.parentElement!)) arrowMap.delete(node.parentElement!)
+				}
+			}
+		}
+	}
+
+	Object.assign(setFloat, value)
+	// * When using Object.assign, getters doesn't seem to carry over.
+	Object.defineProperties(setFloat, {
+		attached: { get() { return value.attached } },
+		tethered: { get() { return value.tethered } },
+		referenced: { get() { return value.referenced } },
+	})
+
+	const compute = (float: HTMLElement, options: Options, floatOptions: FloatOptions) => {
+		let middleware = middlewareMap.get(float)
+		let arrow = arrowMap.get(float)
+
+		if (!middleware) {
+			middleware = [...(options.middleware || [])] as Middleware[]
+
+			// * Modify the arrow middleware, to target the relevant arrow element
+			if (arrowIndex !== undefined && arrowIndex !== -1) {
+				const opts = options.middleware?.find(m => m && typeof m === 'object' && arrowSymbol in m) as
+					| { [arrowSymbol]: ArrowOptions }
+					| undefined
+				middleware[arrowIndex] = _arrow({
+					...opts?.[arrowSymbol],
+					get element() {
+						if (arrow) {
+							return arrow
+						}
+						arrow = arrowMap.get(float)
+						return arrow!
+					}
+				})
+				
+				middlewareMap.set(float, middleware)
+			}
+		}
+		
+		return () => {
+			if (!ref || !float) return
+			options.strategy ??= 'absolute'
+			const target = (floatOptions.tether !== false && tether) || (floatOptions.untether !== false && ref)
+			if(!target) return
+			computePosition(target, float, {
+				...options,
+				middleware
+			}).then((v) => {
+				if (options.autoPosition === false) {
+					then?.(v)
+					return
+				}
+
+				Object.assign(float!.style, {
+					position: options.strategy!,
+					left: `${v.x}px`,
+					top: `${v.y}px`
+				})
+
+				if(arrow) {
+					const { x, y } = v.middlewareData.arrow || {}
+
+					const staticSide = {
+						top: 'bottom',
+						right: 'left',
+						bottom: 'top',
+						left: 'right',
+					}[v.placement.split('-')[0]]!
+
+					Object.assign(arrow.style, {
+						position: options.strategy!,
+						left: x != null ? `${x}px` : '',
+						top: y != null ? `${y}px` : '',
+						right: '',
+						bottom: '',
+						[staticSide]: '-4px'
+					})
+				}
+
+				then?.(v)
+			})
+		}
+	}
+	
+
+	let cleanup: (() => void)[] = []
+
+	onDestroy(() => {
+		cleanup.forEach(cb => cb())
+		cleanup = []
+	})
+
+	$effect.pre(() => {
+		cleanup.forEach(cb => cb())
+		cleanup = []
+
+		if (!ref || floatMap.size === 0) return
+		for (const [float, floatOptions] of floatMap) {
+			compute(float, options, floatOptions)
+			cleanup.push(
+				autoUpdate(tether || ref, float, compute(float, options, floatOptions), options.autoUpdate)
+			)
+		}
+	})
+
+	type SvelteFloatingUI = typeof setFloat & typeof value
+	return setFloat as SvelteFloatingUI
+}
