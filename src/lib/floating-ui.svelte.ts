@@ -7,9 +7,11 @@ import {
 	autoUpdate,
 	computePosition,
 	arrow as _arrow,
-	type Middleware
+	type Middleware,
+	type Placement
 } from '@floating-ui/dom'
 import { onDestroy } from 'svelte'
+import { on } from 'svelte/events'
 import { SvelteMap, SvelteSet } from 'svelte/reactivity'
 
 export {
@@ -32,7 +34,7 @@ export function arrow(options: ArrowOptions | Derivable<ArrowOptions> = {}) {
 }
 
 
-interface Options extends Partial<Omit<ComputePositionConfig, 'autoUpdate'>> {
+export interface FloatingRuneOptions extends Partial<Omit<ComputePositionConfig, 'autoUpdate' | 'placement' | 'strategy'>> {
 	autoUpdate?: AutoUpdateOptions
 	/**
 	 * Whether or not to auto-position the floating element and the arrow, 
@@ -41,6 +43,18 @@ interface Options extends Partial<Omit<ComputePositionConfig, 'autoUpdate'>> {
 	 * @default true
 	*/
 	autoPosition?: boolean
+
+	/**
+	 * Where to place the floating element relative to its reference element
+	 * @default 'bottom'
+	*/
+	placement?: Placement
+
+	/**
+	 * The type of CSS position property to use
+	 * @default 'absolute'
+	*/
+	strategy?: 'absolute' | 'fixed'
 }
 
 interface FloatOptions {
@@ -82,7 +96,7 @@ interface FloatOptions {
  * {/if}
  * ```
 */
-export function floatingUI(options: Options) {
+export function floatingUI(options: FloatingRuneOptions = {}) {
 	/** <float, arrow> */
 	const arrowMap = new WeakMap<HTMLElement, HTMLElement>()
 	const floatMap = new SvelteMap<HTMLElement, FloatOptions>()
@@ -120,8 +134,24 @@ export function floatingUI(options: Options) {
 		 * `use:float.ref` on what you want the reference element
 		 * that the floating element positions relative to
 		 */
-		ref(node: HTMLElement) {
-			ref = node
+		ref(node: HTMLElement, trigger?: (() => boolean) | keyof WindowEventMap) {
+			if (typeof trigger === 'function') {
+				$effect(() => {
+					if (trigger()) {
+						ref = node
+					}
+				})
+				if (trigger()) {
+					ref = node
+				}
+			}
+			else if (typeof trigger === 'string') {
+				$effect(() => on(node, trigger, () => ref = node))
+			}
+			else {
+				ref = node
+			}
+
 			return {
 				destroy: () => {
 					if (ref === node) ref = undefined
@@ -139,8 +169,24 @@ export function floatingUI(options: Options) {
 		 * You can do use:float.tether and do float.untether()
 		 * to attach the floating element to a temporary target.
 		 */
-		tether(node: HTMLElement) {
-			tether = node
+		tether(node: HTMLElement, trigger?: (() => boolean) | keyof WindowEventMap) {
+			if (typeof trigger === 'function') {
+				$effect(() => {
+					if (trigger()) {
+						tether = node
+					}
+				})
+				if(trigger()) {
+					tether = node
+				}
+			}
+			else if (typeof trigger === 'string') {
+				$effect(() => on(node, trigger, () => tether = node))
+			}
+			else {
+				tether = node
+			}
+
 			return {
 				destroy: () => {
 					if (tether === node) tether = undefined
@@ -150,8 +196,20 @@ export function floatingUI(options: Options) {
 		/**
 		 * You can do use:float.tether and do float.untether()
 		 * to attach the floating element to a temporary target.
+		 * 
+		 * Or even `use:float.untether={() => condition}` or `{'pointerexit'}`
 		*/
-		untether() {
+		untether(node?: HTMLElement, trigger?: (() => boolean) | keyof WindowEventMap) {
+			if (typeof trigger === 'function') {
+				$effect(() => {
+					if (trigger()) {
+						tether = undefined
+					}
+				})
+			} else if(typeof trigger === 'string') {
+				$effect(() => on(node!, trigger, () => tether = undefined))
+			}
+
 			tether = undefined
 		},
 		arrow(node: HTMLElement) {
@@ -172,7 +230,7 @@ export function floatingUI(options: Options) {
 		referenced: { get() { return value.referenced } },
 	})
 
-	const compute = (float: HTMLElement, options: Options, floatOptions: FloatOptions) => {
+	const compute = (float: HTMLElement, options: FloatingRuneOptions, floatOptions: FloatOptions) => {
 		let middleware = middlewareMap.get(float)
 		let arrow = arrowMap.get(float)
 
