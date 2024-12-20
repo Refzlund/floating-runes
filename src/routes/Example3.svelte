@@ -2,41 +2,28 @@
 	import floatingUI from 'floating-runes'
 	import { fade } from 'svelte/transition'
 
-	const float = floatingUI({
-		placement: 'left'
-	})
-
+	const float = floatingUI()
 	let url = $state('/')
 
 </script>
 
 {#snippet href(ref: string, text: string)}
-	{#if url === ref}
-		<a
-			class='active'
-			onmouseenter={e => float.tether(e.target as HTMLElement)}
-			use:float.ref
-			href={ref} 
-			onclick={e => e.preventDefault()}
-		>
-			{text}
-		</a>
-	{:else}
-		<a
-			onmouseenter={e => float.tether(e.target as HTMLElement)}
-			href={ref}
-			onclick={e => { e.preventDefault(); url = ref; }}
-		>
-			{text}
-		</a>
-	{/if}
+	<a
+		class:active={url === ref}
+		use:float.tether={'mouseenter'}
+		use:float.ref={() => url === ref}
+		href={ref} 
+		onclickcapture={e => { e.preventDefault(); url = ref; }}
+	>
+		{text}
+	</a>
 {/snippet}
 
 
 <div class='wrapper'>
 	
 	<div class="nav">
-		<div role='list' onmouseleave={() => float.untether()}>
+		<div role='list' use:float.untether={'pointerleave'}>
 			{#if float.tethered}
 				<div
 					class='float hovered'
@@ -81,7 +68,7 @@
 			}
 			
 			> .float.hovered, > .float.active {
-				transform: translateX(100%);
+				transform: translateY(-100%);
 				pointer-events: none;
 				user-select: none;
 
@@ -94,11 +81,20 @@
 				border-radius: .25rem;
 			}
 			> .float.active {
-				height: 2px;
-				top: 37px !important;
-				opacity: 1;
+				transform: translateY(6px);
+				opacity: 0;
+				height: 0px;
+				/* we wait so user doesn't seem initial transition */
+				animation: wait .5s forwards;
+				animation-delay: 1s;
 			}
 		}
+	}
+
+	@keyframes wait {
+		0% {}
+		50% { opacity: 0; height: 0px; transform: translateY(8px); }
+		100% { opacity: 1; height: 2px; transform: translateY(6px); }
 	}
 
 	a {
@@ -107,7 +103,10 @@
 		transition: .15s ease;
 
 		&.active, &:hover {
-			color: white;
+			color: hsl(0, 0%, 100%);
+			@starting-style {
+				color: hsl(0, 0%, 55%);
+			}
 		}
 	}
 
