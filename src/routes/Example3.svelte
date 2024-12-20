@@ -104,6 +104,9 @@
 
 		&.active, &:hover {
 			color: hsl(0, 0%, 100%);
+			@starting-style {
+				color: hsl(0, 0%, 55%);
+			}
 		}
 	}
 

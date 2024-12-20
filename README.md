@@ -80,36 +80,26 @@ You can use `float.tether(element)` to float to another element than the `float.
 
     let url = '/a' // demo example
 
-    const float = floatingUI({
-        placement: 'bottom'
-    })
+    const float = floatingUI()
 </script>
 
 {#snippet href(ref, text)}
-    {#if url === ref}
-        <a
-            class='active' 
-            use:float.ref 
-            href={ref} 
-            onclick={e => e.preventDefault()}
-        > 
-            {text}
-        </a>
-    {:else}
-        <a
-            onmouseenter={e => float.tether(e.target)}
-            href={ref}
-            onclick={e => { e.preventDefault(); url = ref; }}
-        >
-            {text}
-        </a>
-    {/if}
+	 <a
+		class:active={ref === url}
+		use:float.ref={() => ref === url}
+		use:float.tether={'pointerenter'}
+		href={ref}
+	>
+		{text}
+	</a>
 {/snippet}
 
-<div class='hovered' use:float></div>
+{#if float.tethered}
+	<div class='hovered' use:float={{ untether: false }}></div>
+{/if}
 <div class='active' use:float={{ tether: false }}></div>
 
-<div onmouseleave={() => float.untether()}>
+<div use:float.untether={'pointerleave'}>
     {@render href('/a', 'Hover me')}
     {@render href('/b', 'I want attention')}
     {@render href('/c', 'Guys... what about meeEeEe')}
@@ -122,7 +112,7 @@ You can use `float.tether(element)` to float to another element than the `float.
 #### Advanced
 
 As per the documentation of [@floating-ui](https://floating-ui.com/docs/middleware#data),
-you can access the `.then(...)` which works in the same way as their documentation.
+you can access the [.then(...)](#then) which works in the same way as their documentation.
 
 So you can go wild🦒
 
@@ -141,10 +131,6 @@ So you can go wild🦒
     })
 </script>
 ```
-
-> [!IMPORTANT]  
-> As their documentation, remember to place `arrow()`
-> after other middlewares.
 
 <br>
 
@@ -183,6 +169,8 @@ When the component is destroyed, the element that was portalled, will naturally,
 
 > [!NOTE]  
 > The `arrow` middleware does not take an `element` property. Instead apply the Svelte action `use:float.arrow`
+
+##### `.then(...)`
 
 Read more about<br><code>const float = floatingUI(...).then((data: <a href='https://floating-ui.com/docs/computeposition#return-value'>ComputePositionReturn</a>) => void)</code>
 
