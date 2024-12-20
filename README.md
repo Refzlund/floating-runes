@@ -4,9 +4,11 @@ Svelte 5 Runes powered wrapper for [@floating-ui](https://floating-ui.com). An a
 
 floating-runes will also:
 
-- Position arrow/floater automatically (unless `autoPosition` is set to `false`)
-- Provide access to elements with `$state` for `.attached`, `.tethered`, `.referenced`
-- Tethering (temporary element reference)
+- Position arrow/floater automatically (unless `autoPosition: false` is provided)
+- [Access the elements](#floatreferenced-floattethered-and-floatattached) via `$state` for `.referenced`, `.tethered`, `.attached` (tethered ?? referenced)
+- [Tethering](#tethering) (temporary element reference)
+- [Conditional reference/tethering](#floatref-and-floattether)
+- A [`portal`](#bonus) action
 
 Other than that, just use it as you would use `@floating-ui`🎉
 
@@ -173,6 +175,10 @@ When the component is destroyed, the element that was portalled, will naturally,
 ##### `.then(...)`
 
 Read more about<br><code>const float = floatingUI(...).then((data: <a href='https://floating-ui.com/docs/computeposition#return-value'>ComputePositionReturn</a>) => void)</code>
+
+##### `float.referenced`, `float.tethered` and `float.attached`
+
+The element that has been referenced to, or tethered to. Attached will return `tethered ?? referenced`
 
 <br>
 
