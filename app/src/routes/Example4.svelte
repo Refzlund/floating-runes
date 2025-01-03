@@ -1,5 +1,6 @@
-<script>
+<script lang='ts'>
 	import floatingUI, { flip, shift, arrow, offset } from 'floating-runes'
+	import { fly } from 'svelte/transition'
 
 	const float = floatingUI({
 		placement: 'top',
@@ -14,11 +15,13 @@
 
 <div class='wrapper'>
 	<div>
-		<tooltip use:float>
-			This is a tooltip🦒
-			<arrow use:float.arrow></arrow>
-		</tooltip>
-		<button use:float.ref> Hover me </button>
+		{#if float.referenced}
+			<tooltip use:float transition:fly={{ y: 5, duration: 250 }}>
+				This is a tooltip🦒
+				<arrow use:float.arrow></arrow>
+			</tooltip>
+		{/if}
+		<button use:float.ref={'pointerenter'} use:float.unref={'pointerleave'}> Hover me </button>
 	</div>
 </div>
 
@@ -40,6 +43,7 @@
 		border-radius: .25rem;
 		padding: .5rem 1rem;
 		width: max-content;
+		pointer-events: none;
 	}
 
 
