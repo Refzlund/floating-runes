@@ -33,8 +33,10 @@
 					out:fade={{ duration: 100 }}
 				></div>
 			{/if}
-			<div class='float active' use:float={{ tether: false }} style='width: {float.referenced?.clientWidth}px;'></div>
-			
+			{#if float.referenced}
+				<div class='float active' use:float={{ tether: false }} style='width: {float.referenced?.clientWidth}px;'></div>
+			{/if}
+
 			{@render href('/', 'Overview')}
 			{@render href('/b', 'Integrations')}
 			{@render href('/c', 'Activity')}
@@ -72,7 +74,12 @@
 				pointer-events: none;
 				user-select: none;
 
-				transition: left .06s ease, width .2s ease, opacity .3s ease;
+				transition: 
+					left .06s ease, 
+					width .2s ease, 
+					height .3s ease-in, 
+					transform .3s ease-in,
+					opacity .3s ease-in;
 				
 				background-color: white;
 				opacity: .15;
@@ -81,20 +88,17 @@
 				border-radius: .25rem;
 			}
 			> .float.active {
+				border-radius: 99px;
 				transform: translateY(6px);
-				opacity: 0;
-				height: 0px;
-				/* we wait so user doesn't seem initial transition */
-				animation: wait .5s forwards;
-				animation-delay: 1s;
+				opacity: 1;
+				height: 2px;
+				@starting-style {
+					height: 0px;
+					opacity: 0;
+					transform: translateY(8px);
+				}
 			}
 		}
-	}
-
-	@keyframes wait {
-		0% {}
-		50% { opacity: 0; height: 0px; transform: translateY(8px); }
-		100% { opacity: 1; height: 2px; transform: translateY(6px); }
 	}
 
 	a {

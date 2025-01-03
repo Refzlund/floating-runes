@@ -10,7 +10,7 @@ import {
 	type Middleware,
 	type Placement
 } from '@floating-ui/dom'
-import { onDestroy } from 'svelte'
+import { onDestroy, untrack } from 'svelte'
 import { on } from 'svelte/events'
 import { SvelteMap, SvelteSet } from 'svelte/reactivity'
 
@@ -156,6 +156,29 @@ export function floatingUI(options: FloatingRuneOptions = {}) {
 				destroy: () => {
 					if (ref === node) ref = undefined
 				}
+			}
+		},
+		/**
+		 * Remove reference.
+		 * @param node - Node event is attached to
+		 * @param trigger - A callback function with a returning boolean value, or an event-string
+		*/
+		unref(node?: HTMLElement, trigger?: (() => boolean) | keyof WindowEventMap) {
+			if (typeof trigger === 'function') {
+				$effect(() => {
+					if (trigger()) {
+						ref = undefined
+					}
+				})
+				if (trigger()) {
+					ref = undefined
+				}
+			}
+			else if (typeof trigger === 'string') {
+				$effect(() => on(node!, trigger, () => ref = undefined))
+			}
+			else {
+				ref = undefined
 			}
 		},
 		/**
