@@ -29,7 +29,7 @@ Happy coding!🦒
 1. [floatingUI](#floatingui)
 1. [use:float](#floatingui)
 1. [float.ref and float.tether](#floatref-and-floattether)
-1. [float.untether](#floatuntether)
+1. [float.unref and float.untether](#floatunref-and-floatuntether)
 
 <br>
 
@@ -233,11 +233,13 @@ Ex.
 
 <br>
 
-#### `float.untether`
+#### `float.unref` and `float.untether`
+
+`float.unref` removes the current reference.
 
 `float.untether` removes the tethering, so that the floating element will return to the reference (unless `untether: false` is provided).
 
-It can be used directly: `float.untether()`
+Both can be used directly either via `float.unref()` / `float.untether()`
 
 Or like `float.ref` and `float.tether` have a condition to trigger;
 
@@ -245,7 +247,7 @@ Ex.
 
 `use:float.untether={() => condition}`
 <br>or<br>
-`use:float.untether={'pointerleave'}`
+`use:float.unref={'pointerleave'}`
 
 <br>
 <br>
