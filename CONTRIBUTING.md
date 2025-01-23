@@ -11,7 +11,7 @@ This project is a monorepo designed for quick and easy testing across projects.
 
 `bun install`
 
-To use this project link the (subfolder)-package directory with `bun link`.
+To use this project link the (subfolder)-package directory with [`bun link`](https://bun.sh/docs/cli/link).
 
 In an external project, you can run `bun link package-name`.
 
@@ -49,9 +49,10 @@ The name of your PR should start with a tag:
 
 <br>
 
-### Using `@changesets`
+### Use `@changesets`
 
-When your Pull Request is ready to be merged, use `bunx changeset` and bump the *package* version that your PR makes changes to.
+> [!IMPORTANT]  
+> When your Pull Request is ready to be merged, use `bunx changeset` and bump the *package* version that your PR makes changes to.
 
 Major: Breaking changes that require migration
 Feat: New features ― backwards compatible
