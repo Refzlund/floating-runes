@@ -244,7 +244,6 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 			}
 		},
 		compute() {
-			if (!ref || floatMap.size === 0) return
 			for (const [float, floatOptions] of floatMap) {
 				compute(float, options, floatOptions)
 			}
