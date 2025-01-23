@@ -4,7 +4,7 @@
 	"scripts": {
 		"app": "cd app && bun run dev",
 		"package": "cd floating-runes && bun run package",
-		"publish": "cd floating-runes/npm && bun publish"
+		"publish": "bun run package && changeset publish"
 	},
 	"workspaces": [
 		"app",
