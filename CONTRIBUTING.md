@@ -59,3 +59,8 @@ Feat: New features ― backwards compatible
 Patch: Fixes
 
 The changeset-text(s) should use the same convention as naming the PR.
+
+<br>
+<br>
+<br>
+<br>
