@@ -245,7 +245,7 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 		},
 		compute() {
 			for (const [float, floatOptions] of floatMap) {
-				compute(float, options, floatOptions)
+				compute(float, options, floatOptions)()
 			}
 		}
 	}
