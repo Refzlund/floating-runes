@@ -96,7 +96,7 @@ interface FloatOptions {
  * {/if}
  * ```
 */
-export function floatingUI(options: FloatingRuneOptions = {}) {
+function floatingUI(options: FloatingRuneOptions = {}) {
 	/** <float, arrow> */
 	const arrowMap = new WeakMap<HTMLElement, HTMLElement>()
 	const floatMap = new SvelteMap<HTMLElement, FloatOptions>()
@@ -242,6 +242,12 @@ export function floatingUI(options: FloatingRuneOptions = {}) {
 					if (arrowMap.has(node.parentElement!)) arrowMap.delete(node.parentElement!)
 				}
 			}
+		},
+		compute() {
+			if (!ref || floatMap.size === 0) return
+			for (const [float, floatOptions] of floatMap) {
+				compute(float, options, floatOptions)
+			}
 		}
 	}
 
@@ -349,3 +355,10 @@ export function floatingUI(options: FloatingRuneOptions = {}) {
 	type SvelteFloatingUI = typeof setFloat & typeof value
 	return setFloat as SvelteFloatingUI
 }
+
+export interface Float extends ReturnType<typeof floatingUI> {}
+export interface FloatingUI {
+	(options?: FloatingRuneOptions): Float
+}
+
+export default floatingUI as FloatingUI
