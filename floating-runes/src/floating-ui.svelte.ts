@@ -10,9 +10,9 @@ import {
 	type Middleware,
 	type Placement
 } from '@floating-ui/dom'
-import { onDestroy, untrack } from 'svelte'
+import { onDestroy } from 'svelte'
 import { on } from 'svelte/events'
-import { SvelteMap, SvelteSet } from 'svelte/reactivity'
+import { SvelteMap, createSubscriber } from 'svelte/reactivity'
 
 export {
 	offset,
@@ -21,7 +21,8 @@ export {
 	size,
 	autoPlacement,
 	hide,
-	inline
+	inline,
+	platform
 } from '@floating-ui/dom'
 
 
@@ -104,6 +105,9 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 	const arrowIndex = options.middleware?.findIndex(m => m && typeof m === 'object' && arrowSymbol in m)
 	const middlewareMap = new WeakMap<HTMLElement, Middleware[]>
 
+	let trigger: () => void
+	const subscribe = createSubscriber(_trigger => trigger = _trigger)
+
 	let ref = $state(undefined as HTMLElement | undefined)
 	let then = $state(undefined as ((computed: ComputePositionReturn) => void) | undefined)
 	let tether = $state(undefined as HTMLElement | undefined)
@@ -120,14 +124,17 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 	const value = {
 		/** Returns tethered element if any, otherwise referenced element if any. */
 		get attached() {
+			subscribe()
 			return tether ?? ref
 		},
 		/** If tethered, returns the tethered element */
 		get tethered() {
+			subscribe()
 			return tether
 		},
 		/** If it has a reference, returns the referenced element */
 		get referenced() {
+			subscribe()
 			return ref
 		},
 		/**
@@ -326,6 +333,7 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 				}
 
 				then?.(v)
+				trigger()
 			})
 		}
 	}
