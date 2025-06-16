@@ -1,5 +1,11 @@
 # floating-runes
 
+## 1.3.0
+
+### Minor Changes
+
+- feat: trigger attached reactivity on compute ([#6](https://github.com/Refzlund/floating-runes/pull/6))
+
 ## 1.2.1
 
 ### Patch Changes
