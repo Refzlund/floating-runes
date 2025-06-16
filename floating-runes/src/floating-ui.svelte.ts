@@ -105,7 +105,7 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 	const arrowIndex = options.middleware?.findIndex(m => m && typeof m === 'object' && arrowSymbol in m)
 	const middlewareMap = new WeakMap<HTMLElement, Middleware[]>
 
-	let trigger: () => void
+	let trigger: undefined | (() => void)
 	const subscribe = createSubscriber(_trigger => trigger = _trigger)
 
 	let ref = $state(undefined as HTMLElement | undefined)
@@ -333,7 +333,7 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 				}
 
 				then?.(v)
-				trigger()
+				trigger?.()
 			})
 		}
 	}
