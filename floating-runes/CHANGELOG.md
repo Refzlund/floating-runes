@@ -1,5 +1,11 @@
 # floating-runes
 
+## 1.3.1
+
+### Patch Changes
+
+- fix: subscription trigger firing prematurely ([#8](https://github.com/Refzlund/floating-runes/pull/8))
+
 ## 1.3.0
 
 ### Minor Changes
