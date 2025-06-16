@@ -1,0 +1,3 @@
+{
+	"extends": "@refzlund/repo/tsconfig.base.json"
+}

@@ -9,10 +9,10 @@ function unwrapElement(element: Element | { contextElement: Element }) {
 
 function shouldAddVisualOffsets(element: Element, isFixed, floatingOffsetParent) {
 	if (isFixed === void 0) {
-	  isFixed = false
+		isFixed = false
 	}
 	if (!floatingOffsetParent || isFixed && floatingOffsetParent !== getWindow(element)) {
-	  return false
+		return false
 	}
 	return isFixed
 }
@@ -21,7 +21,7 @@ const noOffsets = /*#__PURE__*/createCoords(0)
 function getVisualOffsets(element: Element) {
 	const win = getWindow(element)
 	if (!isWebKit() || !win.visualViewport) {
-	 	 return noOffsets
+		return noOffsets
 	}
 	return {
 		x: win.visualViewport.offsetLeft,
@@ -60,7 +60,10 @@ function getScale(element: Element) {
 
 function getHTMLOffset(
 	documentElement: Element, 
-	scroll: { scrollLeft: number, scrollTop: number },
+	scroll: {
+		scrollLeft: number
+		scrollTop: number 
+	},
 	ignoreScrollbarX = false
 ) {
 	if (ignoreScrollbarX === void 0) {
@@ -80,30 +83,30 @@ function getHTMLOffset(
 function getWindowScrollBarX(element: Element, rect: DOMRect | undefined = undefined) {
 	const leftScroll = getNodeScroll(element).scrollLeft
 	if (!rect) {
-	  return getBoundingClientRect(getDocumentElement(element)).left + leftScroll
+		return getBoundingClientRect(getDocumentElement(element)).left + leftScroll
 	}
 	return rect.left + leftScroll
 }
 
 function getCssDimensions(element: Element) {
-  const css = getComputedStyle(element)
-  // In testing environments, the `width` and `height` properties are empty
-  // strings for SVG elements, returning NaN. Fallback to `0` in this case.
-  let width = parseFloat(css.width) || 0
-  let height = parseFloat(css.height) || 0
-  const hasOffset = isHTMLElement(element)
-  const offsetWidth = hasOffset ? element.offsetWidth : width
-  const offsetHeight = hasOffset ? element.offsetHeight : height
-  const shouldFallback = round(width) !== offsetWidth || round(height) !== offsetHeight
-  if (shouldFallback) {
-	width = offsetWidth
-	height = offsetHeight
-  }
-  return {
-	width,
-	height,
-	$: shouldFallback
-  }
+	const css = getComputedStyle(element)
+	// In testing environments, the `width` and `height` properties are empty
+	// strings for SVG elements, returning NaN. Fallback to `0` in this case.
+	let width = parseFloat(css.width) || 0
+	let height = parseFloat(css.height) || 0
+	const hasOffset = isHTMLElement(element)
+	const offsetWidth = hasOffset ? element.offsetWidth : width
+	const offsetHeight = hasOffset ? element.offsetHeight : height
+	const shouldFallback = round(width) !== offsetWidth || round(height) !== offsetHeight
+	if (shouldFallback) {
+		width = offsetWidth
+		height = offsetHeight
+	}
+	return {
+		width,
+		height,
+		$: shouldFallback
+	}
 }
 
 function getBoundingClientRect(
@@ -234,33 +237,33 @@ function getTrueOffsetParent(element: Element, polyfill) {
 function getOffsetParent(element: Element, polyfill) {
 	const win = getWindow(element)
 	if (isTopLayer(element)) {
-	  return win
+		return win
 	}
 	if (!isHTMLElement(element)) {
-	  let svgOffsetParent = getParentNode(element)
-	  while (svgOffsetParent && !isLastTraversableNode(svgOffsetParent)) {
-		if (isElement(svgOffsetParent) && !isStaticPositioned(svgOffsetParent)) {
-		  return svgOffsetParent
+		let svgOffsetParent = getParentNode(element)
+		while (svgOffsetParent && !isLastTraversableNode(svgOffsetParent)) {
+			if (isElement(svgOffsetParent) && !isStaticPositioned(svgOffsetParent)) {
+				return svgOffsetParent
+			}
+			svgOffsetParent = getParentNode(svgOffsetParent)
 		}
-		svgOffsetParent = getParentNode(svgOffsetParent)
-	  }
-	  return win
+		return win
 	}
 	let offsetParent = getTrueOffsetParent(element, polyfill)
 	while (offsetParent && isTableElement(offsetParent) && isStaticPositioned(offsetParent)) {
-	  offsetParent = getTrueOffsetParent(offsetParent, polyfill)
+		offsetParent = getTrueOffsetParent(offsetParent, polyfill)
 	}
 	if (offsetParent && isLastTraversableNode(offsetParent) && isStaticPositioned(offsetParent) && !isContainingBlock(offsetParent)) {
-	  return win
+		return win
 	}
 	return offsetParent || getContainingBlock(element) || win
 }
 
-export const getElementRects = async function (
+export const getElementRects = async function(
 	this: Platform, 
 	data: {
-		floating: Element,
-		reference: Element,
+		floating: Element
+		reference: Element
 		strategy?: 'absolute' | 'fixed'
 	}
 ) {
@@ -278,4 +281,4 @@ export const getElementRects = async function (
 			height: floatingDimensions.height
 		}
 	}
-  }
+}

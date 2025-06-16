@@ -2,18 +2,21 @@
 	"private": true,
 	"license": "MIT",
 	"scripts": {
-		"app": "cd app && bun run dev",
+		"dev": "bunx repo-storybook",
 		"package": "cd floating-runes && bun run package",
 		"publish": "bun run package && changeset publish"
 	},
 	"workspaces": [
-		"app",
 		"floating-runes"
 	],
 	"devDependencies": {
-		"@changesets/cli": "^2",
-		"@svitejs/changesets-changelog-github-compact": "^1",
-		"@types/bun": "^1",
-		"@types/node": "^22"
+		"@changesets/cli": "^2.29.4",
+		"@refzlund/repo": "github:refzlund/repo#next",
+		"@svitejs/changesets-changelog-github-compact": "^1.2.0",
+		"@types/bun": "^1.2.16",
+		"@types/node": "^22.15.32"
+	},
+	"dependencies": {
+		"svelte": "^5.34.3"
 	}
 }
