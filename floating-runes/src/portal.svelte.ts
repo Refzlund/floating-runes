@@ -1,5 +1,3 @@
-import { onDestroy } from 'svelte'
-
 /**
  * Portals the element as a child to another element.
  * 
@@ -10,19 +8,16 @@ export function portal(
 	/** @default document.body */
 	target?: HTMLElement
 ) {
+	// Move the node to the target immediately
+	const targetElement = target ?? document.body
 	node.parentElement?.removeChild(node)
-	$effect.pre(() => {
-		(target ?? document.body).appendChild(node)
-	})
+	targetElement.appendChild(node)
 
-	const destroy = () => {
-		let parent = target ?? document.body
-		if (!node || node.parentElement !== parent)
-			return
-		parent?.removeChild(node)
-		node.remove()
+	return {
+		destroy() {
+			if (node?.parentElement === targetElement) {
+				targetElement.removeChild(node)
+			}
+		}
 	}
-
-	onDestroy(destroy)
-	return { destroy }
 }

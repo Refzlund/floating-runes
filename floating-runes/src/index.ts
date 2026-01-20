@@ -4,3 +4,5 @@ export * from './floating-ui.svelte.js'
 export default floatingUI
 
 export * from './portal.svelte.js'
+export * from './overlay.svelte.js'
+export * from './singleton.svelte.js'
