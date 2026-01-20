@@ -7,8 +7,11 @@ floating-runes will also:
 - Position arrow/floater automatically (unless `autoPosition: false` is provided)
 - [Access the elements](#floatreferenced-floattethered-and-floatattached) via `$state` for `.referenced`, `.tethered`, `.attached` (tethered ?? referenced)
 - [Tethering](#tethering) (temporary element reference)
+- [Virtual positioning](#virtual-positioning) for cursor/selection-based UIs
 - [Conditional reference/tethering](#floatref-and-floattether)
 - A [`portal`](#bonus) action
+- An [`overlay`](#overlay-action) action with optional scroll locking
+- A [`createSingleton`](#singleton-pattern) factory for singleton UI patterns
 
 Other than that, just use it as you would use `@floating-ui`🎉
 
@@ -20,8 +23,11 @@ Happy coding!🦒
 
 1. [Simple example](#usage)
 1. [Tethering](#tethering)
+1. [Virtual positioning](#virtual-positioning)
 1. [Advanced use](#advanced)
 1. [Portal action](#bonus)
+1. [Overlay action](#overlay-action)
+1. [Singleton pattern](#singleton-pattern)
 
 <br>
 
@@ -30,6 +36,10 @@ Happy coding!🦒
 1. [use:float](#floatingui)
 1. [float.ref and float.tether](#floatref-and-floattether)
 1. [float.unref and float.untether](#floatunref-and-floatuntether)
+1. [float.virtual and float.unvirtual](#floatvirtual-and-floatunvirtual)
+1. [float.placement](#floatplacement)
+1. [Additional exports](#additional-exports)
+1. [createSingleton](#createsingleton)
 
 <br>
 
@@ -111,6 +121,59 @@ You can use `float.tether(element)` to float to another element than the `float.
 
 <br>
 
+#### Virtual positioning
+
+Position relative to a virtual point (mouse cursor, selection range, etc.).
+
+`float.virtual(...)` supports:
+- **VirtualElement**: `float.virtual({ getBoundingClientRect: () => ... })`
+- **Reactive getter**: `float.virtual(() => ({ x, y }))` (updates when dependencies change)
+- **Action + event**: `use:float.virtual={'pointermove'}` (tracks the pointer)
+
+`float.unvirtual(...)` clears the virtual reference and can also be event-driven.
+
+```html
+<script>
+    import floatingUI from 'floating-runes'
+
+    const float = floatingUI({ strategy: 'fixed' })
+</script>
+
+<div
+    use:float.virtual={'pointermove'}
+    use:float.unvirtual={'pointerleave'}
+>
+    Hover me
+</div>
+
+{#if float.referenced}
+    <div class='tooltip' use:float>Follows the cursor</div>
+{/if}
+```
+
+For context menus, you can also set a custom virtual element based on the event:
+
+```html
+<div oncontextmenu={(e) => {
+    float.virtual({
+        getBoundingClientRect: () => ({
+            width: 0,
+            height: 0,
+            x: e.clientX,
+            y: e.clientY,
+            top: e.clientY,
+            left: e.clientX,
+            right: e.clientX,
+            bottom: e.clientY
+        })
+    })
+}}>
+    Right click me
+</div>
+```
+
+<br>
+
 #### Advanced
 
 As per the documentation of [@floating-ui](https://floating-ui.com/docs/middleware#data),
@@ -149,6 +212,26 @@ When the component is destroyed, the element that was portalled, will naturally,
 
 <div use:portal> I'm in the body😏 </div>
 <div use:portal={element}> I'm in another element </div>
+```
+
+<br>
+
+#### Overlay action
+
+Create a full-screen backdrop and optionally lock body scroll (default: `true`).
+
+```html
+<script>
+    import { overlay } from 'floating-runes'
+</script>
+
+<div class='backdrop' use:overlay></div>
+```
+
+Disable scroll locking:
+
+```html
+<div class='backdrop' use:overlay={{ lockScroll: false }}></div>
 ```
 
 <br>
@@ -214,6 +297,12 @@ This Svelte action creates reference to the element that serves as the arrow to 
 > Remember to include the `arrow` middleware,
 > and **put it after other middlewares if needed**.
 
+The arrow element also receives CSS custom properties that reflect the computed placement:
+
+- `--float-side`: `top | right | bottom | left`
+- `--float-rotation`: `0deg | 90deg | 180deg | 270deg`
+- `--float-placement`: full placement string (e.g. `top-start`)
+
 
 <br>
 
@@ -248,6 +337,162 @@ Ex.
 `use:float.untether={() => condition}`
 <br>or<br>
 `use:float.unref={'pointerleave'}`
+
+<br>
+
+#### `float.virtual` and `float.unvirtual`
+
+Set or clear a virtual reference. `VirtualElement` is re-exported from `@floating-ui/dom`.
+
+```html
+<!-- Action style (event-driven) -->
+<div use:float.virtual={'pointermove'} use:float.unvirtual={'pointerleave'}>
+    Follow the cursor
+</div>
+```
+
+```html
+<!-- Reactive getter style -->
+<script>
+    import floatingUI from 'floating-runes'
+
+    const float = floatingUI({ strategy: 'fixed' })
+    let x = $state(0)
+    let y = $state(0)
+
+    float.virtual(() => ({ x, y }))
+</script>
+
+<div onpointermove={(e) => { x = e.clientX; y = e.clientY }}>
+    Track
+</div>
+
+{#if float.referenced}
+    <div use:float>Cursor: {x}, {y}</div>
+{/if}
+```
+
+<br>
+
+#### `float.placement`
+
+Reactive getter for the computed placement (updates on flip/shift).
+
+```html
+<div use:float>Tooltip</div>
+<span>Placement: {float.placement}</span>
+```
+
+<br>
+
+#### Additional exports
+
+- `detectOverflow` (re-export from `@floating-ui/dom`)
+- `VirtualElement` type (re-export from `@floating-ui/dom`)
+
+<br>
+
+#### `createSingleton`
+
+Create a callable singleton action that can be exported from `<script module>` and shared across the app.
+
+```ts
+import { createSingleton } from 'floating-runes'
+
+const tooltip = createSingleton({ placement: 'top' })
+```
+
+<br>
+
+### Singleton Pattern
+
+For tooltips, context menus, and dropdowns where only one should be visible at a time, use `createSingleton`.
+
+The singleton should be created in a `<script module>` so the instance is shared across all imports:
+
+```svelte
+<!-- TooltipRoot.svelte -->
+<script module lang='ts'>
+    import { createSingleton, offset, flip, shift, arrow } from 'floating-runes'
+    import type { Snippet } from 'svelte'
+
+    export const tooltip = createSingleton<string | Snippet>({
+        placement: 'top',
+        strategy: 'fixed',
+        middleware: [
+            offset(8),
+            flip({ padding: 8 }),
+            shift({ padding: 8 }),
+            arrow()
+        ],
+        showDelay: 200,
+        hideDelay: 0
+    })
+</script>
+
+<script lang='ts'>
+    import { portal } from 'floating-runes'
+</script>
+
+{#if tooltip.visible && tooltip.content !== undefined}
+    <div class='tooltip-container' use:tooltip.float use:portal>
+        <div class='tooltip'>
+            {#if typeof tooltip.content === 'string'}
+                {tooltip.content}
+            {:else}
+                {@render tooltip.content()}
+            {/if}
+        </div>
+        <div class='tooltip-arrow' use:tooltip.arrow></div>
+    </div>
+{/if}
+```
+
+Use it anywhere by importing the module export:
+
+```svelte
+<script>
+    import TooltipRoot, { tooltip } from './TooltipRoot.svelte'
+</script>
+
+<TooltipRoot />
+
+<button use:tooltip={'Helpful tooltip text'}>Hover me</button>
+<button use:tooltip={{ content: 'Custom delay', showDelay: 500 }}>Hover me</button>
+```
+
+#### Programmatic control
+
+```ts
+tooltip.show('Hello', buttonEl)
+tooltip.show('At cursor', { x: event.clientX, y: event.clientY })
+tooltip.hide()
+```
+
+For context menus, combine singleton usage with [virtual positioning](#virtual-positioning).
+
+#### Singleton options
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `middleware?` | `Middleware[]` | Floating UI middleware array <br>**Default**: `[offset(8), flip(), shift(), arrow()]` |
+| `showDelay?` | `number` | Delay before showing (ms) <br>**Default**: `0` |
+| `hideDelay?` | `number` | Delay before hiding (ms) <br>**Default**: `0` |
+| `showOn?` | `TriggerEvent \| TriggerEvent[]` | Events that show the singleton <br>**Default**: `['pointerenter', 'focus']` |
+| `hideOn?` | `TriggerEvent \| TriggerEvent[]` | Events that hide the singleton <br>**Default**: `['pointerleave', 'blur']` |
+
+#### Singleton API
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `visible` | `boolean` | Whether the floating element is currently visible |
+| `content` | `string \| Snippet` | Current content to display |
+| `anchor` | `HTMLElement` | Current anchor element (DOM triggers only) |
+| `placement` | `Placement` | Computed placement after positioning |
+| `float` | `Action` | Action to apply to the floating element |
+| `arrow` | `Action` | Action to apply to the arrow element |
+| `show(content, anchor?)` | `function` | Programmatically show, optionally at an element or `{ x, y }` |
+| `hide()` | `function` | Programmatically hide |
 
 <br>
 <br>

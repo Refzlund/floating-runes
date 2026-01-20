@@ -1,3 +1,15 @@
 {
-	"extends": "@refzlund/repo/tsconfig.base.json"
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+		"verbatimModuleSyntax": true,
+		"noEmit": true
+	},
+	"include": ["stories/**/*", "floating-runes/src/**/*"]
 }

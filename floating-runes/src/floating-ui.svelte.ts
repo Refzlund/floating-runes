@@ -4,13 +4,13 @@ import {
 	type ComputePositionConfig,
 	type ComputePositionReturn,
 	type Derivable,
+	type VirtualElement,
 	autoUpdate,
 	computePosition,
 	arrow as _arrow,
 	type Middleware,
 	type Placement
 } from '@floating-ui/dom'
-import { onDestroy } from 'svelte'
 import { on } from 'svelte/events'
 import { SvelteMap, createSubscriber } from 'svelte/reactivity'
 
@@ -108,11 +108,30 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 	let trigger: undefined | (() => void)
 	const subscribe = createSubscriber(_trigger => trigger = _trigger)
 
-	let ref = $state(undefined as HTMLElement | undefined)
+	let ref = $state(undefined as HTMLElement | VirtualElement | undefined)
 	let then = $state(undefined as ((computed: ComputePositionReturn) => void) | undefined)
 	let tether = $state(undefined as HTMLElement | undefined)
+	let currentPlacement = $state(undefined as Placement | undefined)
+
+	function createVirtualElement(x: number, y: number): VirtualElement {
+		return {
+			getBoundingClientRect: () => ({
+				width: 0,
+				height: 0,
+				x,
+				y,
+				top: y,
+				left: x,
+				right: x,
+				bottom: y
+			})
+		}
+	}
 
 	function setFloat(node: HTMLElement, options: FloatOptions = {}) {
+		// Register effect on first float attachment (ensures component context)
+		registerEffect()
+		
 		floatMap.set(node, options)
 		return {
 			destroy: () => {
@@ -136,6 +155,11 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 		get referenced() {
 			subscribe()
 			return ref
+		},
+		/** The current placement (reactive, updates when floatingUI flips/shifts) */
+		get placement() {
+			subscribe()
+			return currentPlacement
 		},
 		/**
 		 * `use:float.ref` on what you want the reference element
@@ -186,6 +210,87 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 			}
 			else {
 				ref = undefined
+			}
+		},
+		/**
+		 * Set a virtual element as the reference.
+		 * Useful for context menus, mouse-following tooltips, etc.
+		 * 
+		 * Can be used as:
+		 * - Method: float.virtual({ getBoundingClientRect: () => ... })
+		 * - Reactive getter: float.virtual(() => ({ x, y })) - reactively updates from $state
+		 * - Action: use:float.virtual={'pointermove'} - follows pointer on that event
+		 */
+		virtual(node: HTMLElement | VirtualElement | (() => { x: number; y: number } | undefined), trigger?: keyof WindowEventMap) {
+			// If it's a reactive getter function, set up an effect
+			if (typeof node === 'function') {
+				const getter = node
+				$effect(() => {
+					const coords = getter()
+					if (coords) {
+						ref = createVirtualElement(coords.x, coords.y)
+					} else {
+						ref = undefined
+					}
+				})
+				return
+			}
+			
+			if (node instanceof HTMLElement) {
+				if (typeof trigger === 'string') {
+					const cleanup = on(node, trigger, (e: Event) => {
+						if (e instanceof MouseEvent || e instanceof PointerEvent) {
+							ref = createVirtualElement(e.clientX, e.clientY)
+						}
+					})
+					return {
+						destroy: () => cleanup()
+					}
+				}
+
+				ref = node
+				return {
+					destroy: () => {
+						if (ref === node) ref = undefined
+					}
+				}
+			}
+
+			// Otherwise it's a VirtualElement (has getBoundingClientRect), use it directly
+			if ('getBoundingClientRect' in node) {
+				ref = node as VirtualElement
+				return {
+					destroy: () => {
+						if (ref === node) ref = undefined
+					}
+				}
+			}
+
+			return {
+				destroy: () => {}
+			}
+		},
+		/**
+		 * Clear the virtual reference.
+		 * 
+		 * Can be used as:
+		 * - Method: float.unvirtual()
+		 * - Action: use:float.unvirtual={'pointerleave'}
+		 */
+		unvirtual(node?: HTMLElement, trigger?: keyof WindowEventMap) {
+			if (typeof trigger === 'string' && node) {
+				const cleanup = on(node, trigger, () => {
+					ref = undefined
+				})
+				return {
+					destroy: () => cleanup()
+				}
+			}
+
+			ref = undefined
+
+			return {
+				destroy: () => {}
 			}
 		},
 		/**
@@ -263,6 +368,7 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 		attached: { get() { return value.attached } },
 		tethered: { get() { return value.tethered } },
 		referenced: { get() { return value.referenced } },
+		placement: { get() { return value.placement } },
 	})
 
 	const compute = (float: HTMLElement, options: FloatingRuneOptions, floatOptions: FloatOptions) => {
@@ -301,6 +407,9 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 				...options,
 				middleware
 			}).then((v) => {
+				// Update reactive placement
+				currentPlacement = v.placement
+
 				if (options.autoPosition === false) {
 					then?.(v)
 					return
@@ -314,13 +423,22 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 
 				if(arrow) {
 					const { x, y } = v.middlewareData.arrow || {}
+					const side = v.placement.split('-')[0] as 'top' | 'right' | 'bottom' | 'left'
 
 					const staticSide = {
 						top: 'bottom',
 						right: 'left',
 						bottom: 'top',
 						left: 'right',
-					}[v.placement.split('-')[0]]!
+					}[side]!
+
+					// CSS rotation for arrow pointing toward reference
+					const rotation = {
+						top: '180deg',
+						right: '270deg',
+						bottom: '0deg',
+						left: '90deg',
+					}[side]!
 
 					Object.assign(arrow.style, {
 						position: options.strategy!,
@@ -330,6 +448,11 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 						bottom: '',
 						[staticSide]: '-4px'
 					})
+
+					// Set CSS custom properties for arrow styling
+					arrow.style.setProperty('--float-side', side)
+					arrow.style.setProperty('--float-rotation', rotation)
+					arrow.style.setProperty('--float-placement', v.placement)
 				}
 
 				then?.(v)
@@ -340,24 +463,42 @@ function floatingUI(options: FloatingRuneOptions = {}) {
 	
 
 	let cleanup: (() => void)[] = []
+	let effectRegistered = false
 
-	onDestroy(() => {
-		cleanup.forEach(cb => cb())
-		cleanup = []
-	})
+	/**
+	 * Registers the $effect.pre for autoUpdate.
+	 * This is deferred until setFloat is called, ensuring we're in a component context.
+	 */
+	function registerEffect() {
+		if (effectRegistered) return
+		effectRegistered = true
 
-	$effect.pre(() => {
-		cleanup.forEach(cb => cb())
-		cleanup = []
+		$effect.pre(() => {
+			// Clean up previous autoUpdate subscriptions
+			cleanup.forEach(cb => cb())
+			cleanup = []
 
-		if (!ref || floatMap.size === 0) return
-		for (const [float, floatOptions] of floatMap) {
-			compute(float, options, floatOptions)
-			cleanup.push(
-				autoUpdate(tether || ref, float, compute(float, options, floatOptions), options.autoUpdate)
-			)
-		}
-	})
+			if (!ref || floatMap.size === 0) return
+			
+			for (const [float, floatOptions] of floatMap) {
+				const computeFn = compute(float, options, floatOptions)
+				// Run initial computation
+				computeFn()
+				// Set up autoUpdate
+				cleanup.push(
+					autoUpdate(tether || ref, float, computeFn, options.autoUpdate)
+				)
+			}
+
+			// Cleanup when effect is destroyed (component unmounts)
+			return () => {
+				cleanup.forEach(cb => cb())
+				cleanup = []
+				// Reset flag so a new effect can be registered in a new component context
+				effectRegistered = false
+			}
+		})
+	}
 
 	type SvelteFloatingUI = typeof setFloat & typeof value
 	return setFloat as SvelteFloatingUI
