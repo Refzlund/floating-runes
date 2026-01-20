@@ -2,7 +2,7 @@
 	"name": "floating-runes",
 	"description": "Uses Svelte 5 runes to wrap floating-ui with additional features like tethering and conditional triggers",
 	"version": "1.4.0",
-	"repository": "github:refzlund/floating-runes",
+	"repository": "git+https://github.com/Refzlund/floating-runes.git",
 	"homepage": "https://github.com/Refzlund/floating-runes",
 	"bugs": {
 		"url": "https://github.com/Refzlund/floating-runes/issues"
