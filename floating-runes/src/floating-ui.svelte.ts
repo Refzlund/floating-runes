@@ -14,6 +14,18 @@ import {
 import { on } from 'svelte/events'
 import { SvelteMap, createSubscriber } from 'svelte/reactivity'
 
+export type {
+	AutoUpdateOptions,
+	ComputePositionConfig,
+	ComputePositionReturn,
+	Derivable,
+	Middleware,
+	MiddlewareData,
+	Placement,
+	Platform,
+	VirtualElement
+} from '@floating-ui/dom'
+
 export {
 	offset,
 	shift,
