@@ -1,5 +1,19 @@
 # floating-runes
 
+## 1.4.0
+
+### Minor Changes
+
+- feat: add overlay action, singleton API, and arrow CSS vars + reactive placement ([#10](https://github.com/Refzlund/floating-runes/pull/10))
+
+- feat: virtual elements support ([#10](https://github.com/Refzlund/floating-runes/pull/10))
+
+- feat: expose arrow CSS vars and reactive placement getter ([#10](https://github.com/Refzlund/floating-runes/pull/10))
+
+- feat: add overlay action with optional scroll locking ([#10](https://github.com/Refzlund/floating-runes/pull/10))
+
+- feat: add createSingleton API for singleton floating patterns ([#10](https://github.com/Refzlund/floating-runes/pull/10))
+
 ## 1.3.1
 
 ### Patch Changes
